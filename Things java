@@ -1,0 +1,114 @@
+import java.util.Scanner;
+
+public class Unit1 {
+	public static void main(String[] args) {
+    	
+        // Test to determine grade
+    	// Scanner input = new Scanner(System.in);
+    	// System.out.println("What grade do you have: ?");
+    	// DetermineGrade(input.nextInt()); // Should return based off input
+    	// input.close();
+    	
+    	// Odd or even calculator
+    	// Scanner input = new Scanner(System.in);
+    	// System.out.println("What number would you like to determine as Odd Or Even?: ");
+    	// OddOrEven(input.nextInt());
+    	// +input.close();
+    	
+    	Calculator();
+    	OddOrEven(102);
+    	QuadraticFormula(122, 122, -1);
+    }
+
+    public static void OddOrEven(int a) {
+        if (a % 10 == 1 || a % 10 == 3 || a % 10 == 5 || a % 10 == 7 || a % 10 == 9) {
+            System.out.println("This value is odd");
+        } else {
+            System.out.println("This value is even");
+        }
+    }
+    public static void QuadraticFormula(int a, int b, int c) {
+        double negativeB = -b;
+        double squaredB = b * b;
+        double fourac = 4.0 * a * c;
+        double discriminant = squaredB - fourac;
+
+        // Check if the discriminant is non-negative
+        if (discriminant >= 0) {
+            double sqrtDiscriminant = Math.sqrt(discriminant);
+            double result1 = (negativeB + sqrtDiscriminant) / (2.0 * a);
+            double result2 = (negativeB - sqrtDiscriminant) / (2.0 * a);
+            
+            System.out.println("Root 1: " + result1);
+            System.out.println("Root 2: " + result2);
+        } else {
+            System.out.println("The equation has no real roots.");
+        }
+    }
+    public static void DetermineGrade(int a) {
+    	
+    	// Grades
+    	// 100-90 == A
+    	// 90-80 == B
+    	// 70-80 == C
+    	// 60-70 == D
+    	// 0-50 == F
+    	
+    	if (a >= 90 && a <= 100) {
+            System.out.println("Grade: A");
+        } else if (a >= 80 && a < 90) {
+            System.out.println("Grade: B");
+        } else if (a >= 70 && a < 80) {
+            System.out.println("Grade: C");
+        } else if (a >= 60 && a < 70) {
+            System.out.println("Grade: D");
+        } else if (a >= 0 && a < 60) {
+            System.out.println("Grade: F"); 
+        } else {
+        	System.out.println("Invalid! Please make sure to put the right number!");
+        }
+    
+    	
+    }
+    public static void Calculator() {
+    	int math = 0;
+
+
+    	Scanner input = new Scanner(System.in);
+    	System.out.print("What is your first number?: ");
+    	int number1 = input.nextInt(); // Get the user's input
+    	System.out.print("What is your second number?: ");
+    	int number2 = input.nextInt();
+    	System.out.print("What type of calculation do you want to do?: "); // not println so its all even on the same line
+    	String userInput = input.next(); // Get the user's input
+    	if(userInput.equals("x") || userInput.equals("*") || userInput.charAt(0) == 'm') {
+    	    math = 1;
+    	} else if(userInput.equals("/") || userInput.equals("%") ||  userInput.charAt(0) == 'd') {
+    		math = 2;    		
+    	} else if(userInput.equals("+") || userInput.charAt(0) == 'a') {
+    		math = 3;
+    	} else if(userInput.equals("-") || userInput.charAt(0) == 's') {
+    		math = 4;
+    	} else {
+    		System.out.println("Invalid operator!");
+    		math = 0;   	
+    	} 
+    	
+    	// Handles system logic
+		if(math == 1) {
+			System.out.println(number1 * number2);    		
+    	} else if(math == 2) {
+    		System.out.println(number1 / number2);
+    	} else if(math == 3) {
+    		System.out.println(number1 + number2);
+    	} else if(math == 4) {
+    		System.out.println(number1 - number2);
+    	}
+    	
+    	
+
+    	
+    }
+    
+
+}
