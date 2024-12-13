@@ -1,0 +1,222 @@
+package asdasdasdasdasdasdasd;
+
+import java.util.Random;
+import java.util.Scanner;
+
+public class asdasdasdasdasdasdasd {
+
+    // Player attributes
+    static String playerName;
+    static int playerLevel = 1;
+    static int playerExperience = 0;
+    static int experienceToNextLevel = 100;
+    static int playerHealth = 25;
+    static int playerMaxHealth = 25;
+    static int maxPlayerHealth = 60;
+    static int minSwordDamage = 10;
+    static int maxSwordDamage = 15;
+    static boolean isPlayerAlive = true;
+    static int playerCoins = 0;
+
+    // Enemy attributes
+    static String enemyName;
+    static int enemyHealth;
+    static int enemyMinDamage;
+    static int enemyMaxDamage;
+    static int minCoins;
+    static int maxCoins;
+    static int minExp;
+    static int maxExp;
+
+    // Shop Health attributes
+    static int healthPotionCount = 0;
+    static int healthPotionCost = 10;
+    static final double healthPotionCostMultiplier = 1.2;
+
+    // Shop Upgrade attributes
+    static int swordUpgradeCount = 0;
+    static int swordUpgradeCost = 20;
+    static final double swordCostMultiplier = 1.2;
+
+    public static void setupEnemyDynamic() {
+        Random random = new Random();
+
+        String[] enemyTypes = {"Goblin", "Orc", "Troll"};
+        enemyName = enemyTypes[random.nextInt(enemyTypes.length)];
+
+        int baseHealth = 15;
+        int baseDamage = 5;
+        int healthScaling = playerLevel * 5;
+        int damageScaling = playerLevel * 2;
+
+        enemyHealth = baseHealth + healthScaling;
+        enemyMinDamage = baseDamage + damageScaling;
+        enemyMaxDamage = enemyMinDamage + 5;
+
+        minCoins = playerLevel * 2;
+        maxCoins = minCoins + 5;
+        minExp = playerLevel * 10;
+        maxExp = minExp + 5;
+        
+        System.out.println("╔═══════════════════════╗");
+        System.out.println("  You encountered a " + enemyName + "!");
+        System.out.println("  Enemy Health: " + enemyHealth);
+        System.out.println("  Enemy Damage: " + enemyMinDamage + " - " + enemyMaxDamage);
+        System.out.println("╚═══════════════════════╝");
+        
+    }
+
+    public static void main(String[] args) {
+        // Welcome message
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Welcome to the RPG Game!");
+
+        System.out.print("Enter your name: ");
+        playerName = scanner.nextLine();
+
+        System.out.println("Hello, " + playerName + "! Let's start your adventure.");
+
+        // Main game loop
+        while (isPlayerAlive && playerHealth > 0) {
+            System.out.println("You are exploring the world...");
+            encounterEvent(scanner);
+        }
+
+        System.out.println("Game over. Thanks for playing!");
+        scanner.close();
+    }
+
+    public static void levelUp() {
+        if (playerExperience >= experienceToNextLevel) {
+            playerExperience -= experienceToNextLevel;
+            experienceToNextLevel += 50;
+            playerLevel++;
+            System.out.println("Congratulations! You leveled up to level " + playerLevel + "!");
+            System.out.println("Choose your upgrade: Strength (+2 damage) or Health (+5 max health).");
+            System.out.print("Enter 's' for Strength or 'h' for Health: ");
+
+            Scanner scanner = new Scanner(System.in);
+            String choice = scanner.nextLine();
+            if (choice.equalsIgnoreCase("s")) {
+                minSwordDamage += 2;
+                maxSwordDamage += 2;
+                System.out.println("Your sword is now stronger!");
+            } else if (choice.equalsIgnoreCase("h")) {
+                playerMaxHealth += 5;
+                playerHealth = playerMaxHealth;
+                System.out.println("Your health has increased to " + playerMaxHealth + "!");
+            } else {
+                System.out.println("Invalid choice, no upgrade applied.");
+            }
+        }
+        System.out.println("Experience: " + playerExperience + "/" + experienceToNextLevel);
+    }
+
+    private static void encounterEvent(Scanner scanner) {
+        Random random = new Random();
+        int event = random.nextInt(10) + 1;
+
+        if (event >= 3 && event <= 10) {
+            setupEnemyDynamic();
+            battle(scanner);
+        } else if (event < 3) {
+            System.out.println("You found a shop!");
+            shop(scanner);
+        }
+    }
+
+    private static void battle(Scanner scanner) {
+        Random random = new Random();
+
+        while (playerHealth > 0 && enemyHealth > 0) {
+        	System.out.println("╔═══════════════════════╗");
+        	System.out.println("  Your Name: " + playerName);
+            System.out.println("  Your Health: " + playerHealth);
+            System.out.println("  Your Damage: " + minSwordDamage + " - " + maxSwordDamage);
+            System.out.println("╚═══════════════════════╝");
+            System.out.print("Choose an action: Attack, Run, or Heal (if available). (a/r/h): ");
+            String action = scanner.nextLine();
+
+            if (action.equalsIgnoreCase("a")) {
+                int playerDamage = random.nextInt(maxSwordDamage - minSwordDamage + 1) + minSwordDamage;
+                System.out.println("╔═══════════════════════╗");
+                System.out.println("  You dealt " + playerDamage + " damage!");
+                enemyHealth -= playerDamage;
+
+                if (enemyHealth <= 0) {
+                    System.out.println("You defeated the " + enemyName + "!");
+                    int coinsEarned = random.nextInt(maxCoins - minCoins + 1) + minCoins;
+                    playerCoins += coinsEarned;
+                    System.out.println("You earned " + coinsEarned + " coins. Total coins: " + playerCoins);
+
+                    int expEarned = random.nextInt(maxExp - minExp + 1) + minExp;
+                    playerExperience += expEarned;
+                    System.out.println("You gained " + expEarned + " experience.");
+
+                    levelUp();
+                    break;
+                }
+
+                int enemyDamage = random.nextInt(enemyMaxDamage - enemyMinDamage + 1) + enemyMinDamage;
+                System.out.println("The " + enemyName + " dealt " + enemyDamage + " damage!");
+                playerHealth -= enemyDamage;
+            } else if (action.equalsIgnoreCase("r")) {
+                System.out.println("You ran away safely!");
+                break;
+            } else if (action.equalsIgnoreCase("h") && healthPotionCount > 0) {
+                playerHealth = Math.min(playerMaxHealth, playerHealth + 20);
+                healthPotionCount--;
+                System.out.println("You used a health potion. Current health: " + playerHealth);
+            } else {
+                System.out.println("Invalid action. Try again.");
+            }
+        }
+
+        if (playerHealth <= 0) {
+            isPlayerAlive = false;
+            System.out.println("You have been defeated by the " + enemyName + ".");
+        }
+    }
+
+    private static void shop(Scanner scanner) {
+        System.out.println("Welcome to the shop!");
+        System.out.println("1. Healing Potion (" + healthPotionCost + " coins)");
+        System.out.println("2. Upgrade Sword (" + swordUpgradeCost + " coins)");
+        System.out.println("3. Exit");
+        System.out.print("Choose an option: ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (choice) {
+            case 1:
+                if (playerCoins >= healthPotionCost) {
+                    playerCoins -= healthPotionCost;
+                    healthPotionCount++;
+                    healthPotionCost += (int) (healthPotionCost * healthPotionCostMultiplier);
+                    System.out.println("You purchased a health potion. Total potions: " + healthPotionCount);
+                } else {
+                    System.out.println("Not enough coins.");
+                }
+                break;
+            case 2:
+                if (playerCoins >= swordUpgradeCost) {
+                    playerCoins -= swordUpgradeCost;
+                    swordUpgradeCount++;
+                    swordUpgradeCost += (int) (swordUpgradeCost * swordCostMultiplier);
+                    minSwordDamage += 2;
+                    maxSwordDamage += 2;
+                    System.out.println("Your sword has been upgraded! Damage: " + minSwordDamage + " - " + maxSwordDamage);
+                } else {
+                    System.out.println("Not enough coins.");
+                }
+                break;
+            case 3:
+                System.out.println("Exiting shop.");
+                break;
+            default:
+                System.out.println("Invalid choice.");
+                break;
+        }
+    }
+}
