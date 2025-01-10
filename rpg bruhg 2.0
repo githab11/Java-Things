@@ -6,38 +6,29 @@ import java.awt.event.*;
 import java.util.Random;
 import javax.swing.border.*;
 import java.util.Random;
+import java.io.*;
+import java.util.Properties;
+
+
 
 public class aasdasdasdasdasd extends JFrame {
 
-    private static final long serialVersionUID = 1L; 
 
-//    Hello welcome to my RPG!
-//    If for some reason you have this source code even though you dont know me, hope you enjoy!
-//    If your name is jason and you teach computer science, I hope this gives me atleast a 97> !
-//    This took me basically the entire winter break and im still actively working on it currently (jan 8th as of writing)
-//    And I hope this is up to your standards!
-//    And if you have any questions about the code please let me know!
-    
-    
     
 // ( this is all java and VERY IMPRESSIVE) (actually theres html for some reaon)
 // I MIGHT crash out if I dont get the highest grade... MIGHT!    
 
     // Game state
+    private static final long serialVersionUID = 1L; 
     private boolean inCombat = false;
     private Timer exploreTimer;
-
     // World state
     private String[] playerArea = {"Green Meadows", "Gloomy Caves", "Zen's Castle"}; 
-    
-    	
-    private int playerAreaAmount = 1;
-//												 /\
-    										     // Default settings
+    private int playerAreaAmount = 1;   	     // Default settings
     private int combatAnimationSpeed = 400;     //
     									       //
                                               // Player attributes
-          private String playerName = " ";//  /\ 
+          private String playerName = " ";// /\ 
                 private int playerLevel = 1;//\\
             private int playerExperience = 0;//\\
        private int experienceToNextLevel = 70;//\\
@@ -45,7 +36,7 @@ public class aasdasdasdasdasd extends JFrame {
                private int playerMaxHealth = 50;//\\
                  private int minSwordDamage = 12;//\\
                   private int maxSwordDamage = 18;//\\
-              private boolean isPlayerAlive = true; // sickass fucking thing
+              private boolean isPlayerAlive = true; // sickass thing
                      private int playerCoins = 15; //
               private boolean ownedRelic = false; //
               private int healthUpAddition = 15; //
@@ -71,7 +62,7 @@ public class aasdasdasdasdasd extends JFrame {
 //                                        \ //   
 //     									   \/	                       
    // Really far decimal in the version to look sophisticated (and yes i didnt have to google how to spell that)
-    private String gameVersion = "V1.8.904097 (Completing progression)"; 
+    private String gameVersion = "V2.1.67553 (Save & Quitting)"; 
     			private JTextArea gameLog;
     		 private JButton attackButton;
                 private JButton runButton;
@@ -83,6 +74,10 @@ public class aasdasdasdasdasd extends JFrame {
                 private JLabel statsLabel;
                 private JLabel enemyLabel;
                     private Random random;
+               private JButton saveButton;
+               private JButton quitButton;
+               private JPanel buttonPanel;
+               
 
 
     // Shop attributes   
@@ -186,7 +181,7 @@ public class aasdasdasdasdasd extends JFrame {
         
         setTitle("RPG Adventure (" + findMessage() + ") ");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(700, 700);
+        setSize(1000, 700);
         setLocationRelativeTo(null);
     }
 
@@ -229,9 +224,20 @@ public class aasdasdasdasdasd extends JFrame {
         settingsButton.addActionListener(e -> openSettings());
         
 
-        // Initially disable combat buttons
-        setCombatButtonsEnabled(false);
+        saveButton = new JButton("Save");
+        quitButton = new JButton("Save & Quit");
+        buttonPanel = new JPanel(new GridLayout(1, 7, 10, 10));
+
+        // Add button listeners
+        saveButton.addActionListener(e -> saveGame());
+        quitButton.addActionListener(e -> {
+            saveGame();
+            System.exit(0);
+        });
+        
     }
+
+    
 
     private void layoutComponents() {
         setLayout(new BorderLayout());
@@ -247,14 +253,15 @@ public class aasdasdasdasdasd extends JFrame {
         JScrollPane scrollPane = new JScrollPane(gameLog);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Game Log"));
 
-        // Bottom panel for buttons with symmetrical grid
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 5, 10, 10)); // 1 row, 5 columns
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Add padding
+        // Bottom panel for buttons
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         buttonPanel.add(attackButton);
         buttonPanel.add(runButton);
         buttonPanel.add(healButton);
         buttonPanel.add(shopButton);
         buttonPanel.add(settingsButton);
+        buttonPanel.add(saveButton);
+        buttonPanel.add(quitButton);
 
         // Enemy panel
         JPanel enemyPanel = new JPanel();
@@ -267,6 +274,7 @@ public class aasdasdasdasdasd extends JFrame {
         add(buttonPanel, BorderLayout.SOUTH);
         add(enemyPanel, BorderLayout.EAST);
     }
+
 
     private void initializeGame() {
         String name = JOptionPane.showInputDialog(this, "Enter your name:", "Welcome to RPG Adventure", JOptionPane.QUESTION_MESSAGE);
@@ -461,7 +469,7 @@ public class aasdasdasdasdasd extends JFrame {
             }
         });
 
-        settingsDialog.setVisible(true);
+        settingsDialog.setVisible(true); // treeka treekn terrrkey turkey
     }
     
 
@@ -863,7 +871,8 @@ public class aasdasdasdasdasd extends JFrame {
     }
 
 
-    // I SO FUCKING ANGRY 静夜思 床前明月光，疑是地上霜。举头望明月， 低头思故乡 (as u can tell i dont like this code) (yes,... again)
+    // I SO FUCKING ANGRY 静夜思
+    // 床前明月光，疑是地上霜。举头望明月， 低头思故乡 (as u can tell i dont like this code) (yes,... again)
 	private int coinsEarned;
     private int expEarned;
     
@@ -1106,7 +1115,6 @@ public class aasdasdasdasdasd extends JFrame {
 
 
     private void triggerRandomEvent() {
-    	
     	int randomEvent = random.nextInt(6) + 1;
     	switch(randomEvent) {
     		case 1:
@@ -1253,6 +1261,75 @@ public class aasdasdasdasdasd extends JFrame {
         
         }
     }
+ // Add these methods to your main class
+    private void saveGame() {
+        Properties save = new Properties();
+        
+        // Save player stats
+        save.setProperty("playerName", playerName);
+        save.setProperty("playerLevel", String.valueOf(playerLevel));
+        save.setProperty("playerExperience", String.valueOf(playerExperience));
+        save.setProperty("experienceToNextLevel", String.valueOf(experienceToNextLevel));
+        save.setProperty("playerHealth", String.valueOf(playerHealth));
+        save.setProperty("playerMaxHealth", String.valueOf(playerMaxHealth));
+        save.setProperty("minSwordDamage", String.valueOf(minSwordDamage));
+        save.setProperty("maxSwordDamage", String.valueOf(maxSwordDamage));
+        save.setProperty("playerCoins", String.valueOf(playerCoins));
+        save.setProperty("healthPotionCount", String.valueOf(healthPotionCount));
+        save.setProperty("armourAmount", String.valueOf(armourAmount));
+        save.setProperty("playerKarma", String.valueOf(playerKarma));
+        save.setProperty("currentArea", currentArea);
+        save.setProperty("areaProgress", String.valueOf(areaProgress));
+        save.setProperty("ownedRelic", String.valueOf(ownedRelic));
+        save.setProperty("playerExpBoost", String.valueOf(playerExpBoost));
+        save.setProperty("difficulty", currentDifficulty);
+
+        try (FileOutputStream out = new FileOutputStream("rpg_save.properties")) {
+            save.store(out, "RPG Save Data");
+            appendToLog("Game saved successfully!");
+        } catch (IOException e) {
+            appendToLog("Error saving game: " + e.getMessage());
+        }
+    }
+    private void loadGame() {
+        Properties save = new Properties();
+        
+        try (FileInputStream in = new FileInputStream("rpg_save.properties")) {
+            save.load(in);
+            
+            // MY FINGER HURT
+     
+            playerName = save.getProperty("playerName");
+            playerLevel = Integer.parseInt(save.getProperty("playerLevel"));
+            playerExperience = Integer.parseInt(save.getProperty("playerExperience"));
+            experienceToNextLevel = Integer.parseInt(save.getProperty("experienceToNextLevel"));
+            playerHealth = Integer.parseInt(save.getProperty("playerHealth"));
+            playerMaxHealth = Integer.parseInt(save.getProperty("playerMaxHealth"));
+            minSwordDamage = Integer.parseInt(save.getProperty("minSwordDamage"));
+            maxSwordDamage = Integer.parseInt(save.getProperty("maxSwordDamage"));
+            playerCoins = Integer.parseInt(save.getProperty("playerCoins"));
+            healthPotionCount = Integer.parseInt(save.getProperty("healthPotionCount"));
+            armourAmount = Integer.parseInt(save.getProperty("armourAmount"));
+            playerKarma = Integer.parseInt(save.getProperty("playerKarma"));
+            currentArea = save.getProperty("currentArea");
+            areaProgress = Integer.parseInt(save.getProperty("areaProgress"));
+            ownedRelic = Boolean.parseBoolean(save.getProperty("ownedRelic"));
+            playerExpBoost = Integer.parseInt(save.getProperty("playerExpBoost"));
+            setDifficulty(save.getProperty("difficulty"), true);
+            
+         // MY FINGERS HURT OW!
+            updateAll();
+            healButton.setText("Heal (" + healthPotionCount + ")");
+            appendToLog("Game loaded successfully!");
+            appendToLog("Welcome back, " + playerName + "!");
+            
+        } catch (FileNotFoundException e) {
+            appendToLog("No save file found.");
+        } catch (IOException e) {
+            appendToLog("Error loading game: " + e.getMessage());
+        }
+    }
+    
     private void updateHealthBar() {
         healthBar.setMaximum(playerMaxHealth);
         healthBar.setValue(Math.max(0, Math.min(playerHealth, playerMaxHealth)));
@@ -1285,6 +1362,23 @@ public class aasdasdasdasdasd extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             aasdasdasdasdasd game = new aasdasdasdasdasd();
+            
+            // Check for save file
+            if (new File("rpg_save.properties").exists()) {
+                int choice = JOptionPane.showOptionDialog(game,
+                    "Would you like to load your saved game?",
+                    "Load Game",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    new String[]{"Load Save", "New Game"},
+                    "Load Save");
+                    
+                if (choice == 0) {
+                    game.loadGame();
+                }
+            }
+            
             game.setVisible(true);
         });
     }
