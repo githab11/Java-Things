@@ -5,6 +5,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Random;
 import javax.swing.border.*;
+import javax.swing.plaf.basic.BasicProgressBarUI;
+
 import java.util.Random;
 import java.io.*;
 import java.util.Properties;
@@ -13,70 +15,61 @@ import java.util.Properties;
 
 public class aasdasdasdasdasd extends JFrame {
 
-
-    
-// ( this is all java and VERY IMPRESSIVE) (actually theres html for some reaon)
-// I MIGHT crash out if I dont get the highest grade... MIGHT!    
-
+	private static final double CLERIC_HEAL_PERCENT = 0.35;           // Increased from 0.25 for more impactful healing
+	private static final int SHIELD_STRONG_BOOST = 3;                 // Increased from 2 for better early defense
+	private static final int SHIELD_WEAK_BOOST = 2;                   // Increased from 1 to maintain relevance
+	private static final int MAX_STRONG_SHIELD_PURCHASES = 4;         // Increased from 3 to extend early game power curve
+	private static final int SHOP_HEALTH_INCREASE = 20;               // Increased from 15 for more impactful upgrades
+	private String playerName = " ";
+	private boolean isPlayerAlive = true;
+	private boolean ownedRelic = false;	
     // Game state
     private static final long serialVersionUID = 1L; 
     private boolean inCombat = false;
     private Timer exploreTimer;
+    
     // World state
     private String[] playerArea = {"Green Meadows", "Gloomy Caves", "Zen's Castle"}; 
-    private int playerAreaAmount = 1;   	     // Default settings
-    private int combatAnimationSpeed = 400;     //
-    									       //
-                                              // Player attributes
-          private String playerName = " ";// /\ 
-                private int playerLevel = 1;//\\
-            private int playerExperience = 0;//\\
-       private int experienceToNextLevel = 70;//\\
-                 private int playerHealth = 50;//\\
-               private int playerMaxHealth = 50;//\\
-                 private int minSwordDamage = 12;//\\
-                  private int maxSwordDamage = 18;//\\
-              private boolean isPlayerAlive = true; // sickass thing
-                     private int playerCoins = 15; //
-              private boolean ownedRelic = false; //
-              private int healthUpAddition = 15; //
-                private int playerExpBoost = 0; //
-           private int healthPotionCount = 2;  // 
-               private int armourAmount = 0;  // 
-               private int playerKarma = 0;  //   Unused, hopefully i will think of an amazing math
-               							    //    equasion to reduce shop prices by this amount.
-               							   //     Or just each price is subtracted by karma amount. Who knows xd
-                     // Enemy attributes  //
-                private String enemyName;//
-                 private int enemyLevel;//
-               private int enemyHealth;//
-           private int enemyMinDamage;//\\
-          private int enemyMaxDamage;//\ \\  Cant do double slashes to note... the epic ascii art ends here...
-                 private int minCoins;//\ \\
-                  private int maxCoins;//\ \\
-                     private int minExp;//\ \\
-                      private int maxExp;//\ \\
-                      					//  \ \\ // epic ass diamond bruh
-//										\\  / //		
-    // GUI Components                    \\/ //
-//                                        \ //   
-//     									   \/	                       
-   // Really far decimal in the version to look sophisticated (and yes i didnt have to google how to spell that)
-    private String gameVersion = "V2.1.67553 (Save & Quitting)"; 
-    			private JTextArea gameLog;
-    		 private JButton attackButton;
-                private JButton runButton;
-               private JButton healButton;
-               private JButton shopButton;
-           private JButton settingsButton;
-           private JProgressBar healthBar;
-              private JProgressBar expBar;
-                private JLabel statsLabel;
-                private JLabel enemyLabel;
-                    private Random random;
-               private JButton saveButton;
-               private JButton quitButton;
-               private JPanel buttonPanel;
+    private int playerAreaAmount = 1;   	     
+    private int combatAnimationSpeed = 400;     
+    
+    // Player Attributes
+    private int playerLevel = 1;
+    private int playerExperience = 0;
+    private int experienceToNextLevel = 85;                          // Decreased from 100 for faster early progression
+    private int playerHealth = 60;                                   // Increased from 50 for better survivability
+    private int playerMaxHealth = 60;                               // Increased from 50
+    private int minSwordDamage = 8;                                 // Decreased from 10 for better scaling
+    private int maxSwordDamage = 12;                               // Decreased from 15 for better scaling
+    private int playerCoins = 20;                                   // Increased from 15 for more early choices
+    private int healthUpAddition = 18;                              // Increased from 15 for more impactful upgrades
+    private int playerExpBoost = 0;
+    private int healthPotionCount = 2;                              // Increased from 1 for better early survival
+    private int armourAmount = 0;
+    private int playerKarma = 0;
+    
+	// Enemy attributes 
+	private int enemyHealth;
+	private int enemyLevel; private String enemyName;
+	private int enemyMinDamage;	private int enemyMaxDamage;	
+	private int minCoins; private int maxCoins;	
+	private int minExp; private int maxExp;
+	
+                      
+
+
+	// I figured I should make a changelog so i guess ill have it here on the code comments
+	// Currently Jan 11:
+	// Fixing Balancing and Internal bugs (making enemies not deal negative damage)
+	// Working on cleaning up code and making it more organised
+	
+    private String gameVersion = "V2.4.737388 (Save & Quitting)"; 
+    private JTextArea gameLog;
+    private JButton attackButton, runButton, healButton, shopButton, settingsButton, saveButton, quitButton;
+    private JProgressBar healthBar, expBar;
+    private JLabel statsLabel, enemyLabel;
+    private Random random;
+    private JPanel buttonPanel = new JPanel(new GridLayout(1, 7, 10, 10));
                
 
 
@@ -88,34 +81,74 @@ public class aasdasdasdasdasd extends JFrame {
     	    "Experience Boost",
     	    "Armor Piece"
     	};
-
+    	private int shopDisplayHP = 25 + playerMaxHealth / 8;
+    	
     	private String[] shopItemDescriptions = {
-    	    "Restores 20 HP",
-    	    "+2 to min/max damage",
-    	    "+5 max health",
-    	    "+50% EXP for 3 battles",
-    	    "Reduces damage taken by 1"
-    	};
+    		    "Restores " + shopDisplayHP + " HP, (Changes depending on health)",
+    		    "+3 to min/max damage",                                     // Increased from +2
+    		    "+" + SHOP_HEALTH_INCREASE + " max health",
+    		    "+75% EXP for 3 battles",                                  // Increased from 50%
+    		    "Reduces damage taken by " + SHIELD_STRONG_BOOST + " for first " + MAX_STRONG_SHIELD_PURCHASES + " plates"
+    		};
 
-    	private int[] shopItemCosts = {
-    	    10,  // Health Potion
-    	    20,  // Sword Upgrade
-    	    25,  // Max Health Up
-    	    40,  // Experience Boost
-    	    30   // Armor Piece
+    private int[] shopItemCosts = {
+    	    12,     // Health Potion (increased from 10)
+    	    25,     // Sword Upgrade (increased from 20)
+    	    30,     // Max Health Up (increased from 25)
+    	    45,     // Experience Boost (increased from 40)
+    	    55      // Armor Piece (increased from 50)
     	};
 
     	private double[] shopItemMultipliers = {
-    	    1.1,  // Health Potion
-    	    1.5,  // Sword Upgrade
-    	    1.5,  // Max Health Up
-    	    1.2,  // Experience Boost
-    	    1.4   // Armor Piece
+    	    1.15,   // Health Potion (increased from 1.1)
+    	    1.4,    // Sword Upgrade (decreased from 1.5 for better long-term scaling)
+    	    1.35,   // Max Health Up (decreased from 1.5 for better long-term scaling)
+    	    1.25,   // Experience Boost (increased from 1.2)
+    	    1.45    // Armor Piece (decreased from 1.5 for better long-term scaling)
     	};
-    	public String findMessage() {
+   private void updateShop() {
+	    String[] shopItemNames = {
+	    	    "Health Potion",
+	    	    "Sword Upgrade",
+	    	    "Max Health Up",
+	    	    "Experience Boost",
+	    	    "Armor Piece"
+	    	};
+	    	 int shopDisplayHP = 25 + playerMaxHealth / 8;
+	    	
+	    	 String[] shopItemDescriptions = {
+	    		    "Restores " + shopDisplayHP + " HP, (Changes depending on health)",
+	    		    "+3 to min/max damage",                                     // Increased from +2
+	    		    "+" + SHOP_HEALTH_INCREASE + " max health",
+	    		    "+75% EXP for 3 battles",                                  // Increased from 50%
+	    		    "Reduces damage taken by " + SHIELD_STRONG_BOOST + " for first " + MAX_STRONG_SHIELD_PURCHASES + " plates"
+	    		};
+
+	     int[] shopItemCosts = {
+	    	    12,     // Health Potion (increased from 10)
+	    	    25,     // Sword Upgrade (increased from 20)
+	    	    30,     // Max Health Up (increased from 25)
+	    	    45,     // Experience Boost (increased from 40)
+	    	    55      // Armor Piece (increased from 50)
+	    	};
+
+	    	 double[] shopItemMultipliers = {
+	    	    1.15,   // Health Potion (increased from 1.1)
+	    	    1.4,    // Sword Upgrade (decreased from 1.5 for better long-term scaling)
+	    	    1.35,   // Max Health Up (decreased from 1.5 for better long-term scaling)
+	    	    1.25,   // Experience Boost (increased from 1.2)
+	    	    1.45    // Armor Piece (decreased from 1.5 for better long-term scaling)
+	    	};
+   }
+   
+    
+    
+
+    	
+    public String findMessage() {
     		 String gameMessage[] = {
     		    		"Buy one for the price of two, get one free!",
-    		    		"The guy next to me smells like fish",
+    		    		"The guy next to me writing this smells like fish",
     		    		"Joey",
     		    		"Eric",
     		    		"Keeanu reeves wholesome reddit gold",
@@ -150,131 +183,136 @@ public class aasdasdasdasdasd extends JFrame {
     		    		"Also play Minecraft!",
     		    		"Also play Terraria!",
     		    		"im running out of ideas for things to write",
-    		    		":3",
-    		    		"xd",
-    		    		":)",
-    		    		":-)",
-    		    		":(",
-    		    		":-(",
+    		    		" :3 ",
+    		    		" xd ",
+    		    		" :) ",
+    		    		" :-) ",
+    		    		" :( ",
+    		    		" :-( ",
     		    		
     		    		// just something small that i thought i'd add
     		    };
     		 
     		return gameMessage[random.nextInt(gameMessage.length)];
-    	}
+    	}	
     	 
+   
     
 
     public aasdasdasdasdasd() {
-    	// I like this :)
-        random = new Random();
+    	 random = new Random(); // Initialize the Random object here
+    	
         initializeFrame();
         createComponents();
         layoutComponents();
         initializeGame();
     }
-    
-    // Splash messages like minecraft. Will display a message at the top of the game 
-    
-   
-    private void initializeFrame() {
-        
-        setTitle("RPG Adventure (" + findMessage() + ") ");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 700);
-        setLocationRelativeTo(null);
-    }
+     
+     
+     
+     private void initializeFrame() {
+    	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    	    setSize(1000, 700);
+    	    setLocationRelativeTo(null);
+    	    setTitle("Your Game Title");
+    	}
 
-    private void createComponents() {
-        // Create game log
-        gameLog = new JTextArea(10, 40);
-        gameLog.setEditable(false);
-        gameLog.setLineWrap(true);
-        gameLog.setWrapStyleWord(true);
-        gameLog.setFont(new Font("Courier", Font.PLAIN, 13)); // I like this font, found it on my fonts list on my pc
 
-        // Create buttons
-        attackButton = new JButton("Attack");
-        runButton = new JButton("Run");
-        healButton = new JButton("Heal " + "(" + healthPotionCount + ")");
-        shopButton = new JButton("Shop");
-        settingsButton = new JButton("Settings");
+     private void createComponents() {
+    	    // Create game log
+    	    gameLog = new JTextArea(10, 40);
+    	    gameLog.setEditable(false);
+    	    gameLog.setLineWrap(true);
+    	    gameLog.setWrapStyleWord(true);
+    	    gameLog.setFont(new Font("Courier", Font.PLAIN, 13)); // You like this font
 
-        // Create progress bars
-        healthBar = new JProgressBar(0, playerMaxHealth);
-        healthBar.setValue(playerHealth);
-        healthBar.setString("Health: " + playerHealth + "/" + playerMaxHealth);
-        healthBar.setStringPainted(true);
+  
+    	    // Create buttons
+    	    attackButton = new JButton("Attack");
+    	    runButton = new JButton("Run");
+    	    healButton = new JButton("Heal " + "(" + healthPotionCount + ")");
+    	    shopButton = new JButton("Shop");
+    	    settingsButton = new JButton("Settings");
 
-        expBar = new JProgressBar(0, experienceToNextLevel);
-        expBar.setMaximum(experienceToNextLevel);
-        expBar.setValue(playerExperience);
-        expBar.setString("EXP: " + playerExperience + "/" + experienceToNextLevel);
-        expBar.setStringPainted(true);
+    	    // Create progress bars
+    	    healthBar = new JProgressBar(0, playerMaxHealth);
+    	    healthBar.setValue(playerHealth);
+    	    healthBar.setString("Health: " + playerHealth + "/" + playerMaxHealth);
+    	    healthBar.setStringPainted(true);
+  
+    	    healthBar.setUI(new BasicProgressBarUI());
+    	   
 
-        // Create labels
-        statsLabel = new JLabel("Level: " + playerLevel + " | Coins: " + playerCoins);
-        enemyLabel = new JLabel("No enemy present");
+    	    expBar = new JProgressBar(0, experienceToNextLevel);
+    	    expBar.setMaximum(experienceToNextLevel);
+    	    expBar.setValue(playerExperience);
+    	    expBar.setString("EXP: " + playerExperience + "/" + experienceToNextLevel);
+    	    expBar.setStringPainted(true);
+    	   
+    	    // Create labels
+    	    statsLabel = new JLabel("Level: " + playerLevel + " | Coins: " + playerCoins);
+    	    enemyLabel = new JLabel("No enemy present");
 
-        // Add button listeners
-        attackButton.addActionListener(e -> handleAttack());
-        runButton.addActionListener(e -> handleRun());
-        healButton.addActionListener(e -> handleHeal());
-        shopButton.addActionListener(e -> openShop());
-        settingsButton.addActionListener(e -> openSettings());
-        
+    	    // Add button listeners
+    	    attackButton.addActionListener(e -> handleAttack());
+    	    runButton.addActionListener(e -> handleRun());
+    	    healButton.addActionListener(e -> handleHeal());
+    	    shopButton.addActionListener(e -> openShop());
+    	    settingsButton.addActionListener(e -> openSettings());
 
-        saveButton = new JButton("Save");
-        quitButton = new JButton("Save & Quit");
-        buttonPanel = new JPanel(new GridLayout(1, 7, 10, 10));
+    	    saveButton = new JButton("Save");
+    	    quitButton = new JButton("Save & Quit");
+    	    buttonPanel = new JPanel(new GridLayout(1, 7, 10, 10));
 
-        // Add button listeners
-        saveButton.addActionListener(e -> saveGame());
-        quitButton.addActionListener(e -> {
-            saveGame();
-            System.exit(0);
-        });
-        
-    }
+    	    // Add button listeners
+    	    saveButton.addActionListener(e -> saveGame());
+    	    quitButton.addActionListener(e -> {
+    	        saveGame();
+    	        System.exit(0);
+    	    });
+    	}
+     
+     
+     private void layoutComponents() {
+    	    setLayout(new BorderLayout());
 
-    
+    	    // Top panel for player stats
+    	    JPanel statsPanel = new JPanel(new GridLayout(3, 1, 5, 5));
+    	    statsPanel.setBorder(BorderFactory.createTitledBorder("Player Status"));
+    	    statsPanel.add(statsLabel);
+    	    statsPanel.add(healthBar);
+    	    statsPanel.add(expBar);
 
-    private void layoutComponents() {
-        setLayout(new BorderLayout());
+    	    // Center panel for game log
+    	    JScrollPane scrollPane = new JScrollPane(gameLog);
+    	    
+    	    // Bottom panel for buttons
+    	    buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    	    buttonPanel.add(attackButton);
+    	    buttonPanel.add(runButton);
+    	    buttonPanel.add(healButton);
+    	    buttonPanel.add(shopButton);
+    	    buttonPanel.add(settingsButton);
+    	    buttonPanel.add(saveButton);
+    	    buttonPanel.add(quitButton);
 
-        // Top panel for player stats
-        JPanel statsPanel = new JPanel(new GridLayout(3, 1, 5, 5));
-        statsPanel.setBorder(BorderFactory.createTitledBorder("Player Status"));
-        statsPanel.add(statsLabel);
-        statsPanel.add(healthBar);
-        statsPanel.add(expBar);
+    	    // Enemy panel
+    	    JPanel enemyPanel = new JPanel();
+    	    enemyPanel.setBorder(BorderFactory.createTitledBorder("Enemy Stat's"));
+    	    enemyPanel.add(enemyLabel);
 
-        // Center panel for game log
-        JScrollPane scrollPane = new JScrollPane(gameLog);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Game Log"));
-
-        // Bottom panel for buttons
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        buttonPanel.add(attackButton);
-        buttonPanel.add(runButton);
-        buttonPanel.add(healButton);
-        buttonPanel.add(shopButton);
-        buttonPanel.add(settingsButton);
-        buttonPanel.add(saveButton);
-        buttonPanel.add(quitButton);
-
-        // Enemy panel
-        JPanel enemyPanel = new JPanel();
-        enemyPanel.setBorder(BorderFactory.createTitledBorder("Enemy Stat's"));
-        enemyPanel.add(enemyLabel);
-
-        // Add all panels to frame
-        add(statsPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
-        add(enemyPanel, BorderLayout.EAST);
-    }
-
+    	    // Add all panels to frame
+    	    add(statsPanel, BorderLayout.NORTH);
+    	    add(scrollPane, BorderLayout.CENTER);
+    	    add(buttonPanel, BorderLayout.SOUTH);
+    	    add(enemyPanel, BorderLayout.EAST);
+    	    
+    	    // Revalidate and repaint to ensure changes take effect
+    	    revalidate();
+    	    repaint();
+    	}
+     
+     
 
     private void initializeGame() {
         String name = JOptionPane.showInputDialog(this, "Enter your name:", "Welcome to RPG Adventure", JOptionPane.QUESTION_MESSAGE);
@@ -290,10 +328,14 @@ public class aasdasdasdasdasd extends JFrame {
         updateStats();
         appendToLog("⚔︎ Welcome, " + playerName + "! Your adventure begins! ⚔︎");
         startExploration();
+        
+        setTitle("RPG Adventure (" + findMessage() + ") "); // Moved title changer here because sometimes itll display no name
     }
-    // Add these class variables at the top of your main class
-    private int baseMaxHealth = 35; // Store original max health
-    private int baseDamage = 8; // Store original min damage
+    
+    
+    
+    private int baseMaxHealth = playerMaxHealth; // Store original max health
+    private int baseDamage = minSwordDamage; // Store original min damage
     private int baseHealthUpgrade = 10; // Store original health upgrade amount
 
     // Update the difficulty-related variables
@@ -301,72 +343,108 @@ public class aasdasdasdasdasd extends JFrame {
     private double difficultyHealthMultiplier = 1.0;
     private double difficultyDamageMultiplier = 1.0; // I literally use this variable???
     											    // Why is it showing unused
-    
+
+
     String developerName = "John RPG";// Me :) (Used to be Jack)
     // Idk if i should put my last name on here
+    
+    
+    
+    // Declare settings variables
+    private boolean autosaveEnabled = false; // Default: autosave off
 
+    private boolean enemyHealthBarVisible = true; // Default: health bar visible
+    private Timer autosaveTimer; // Timer for autosave
+
+
+
+    // Toggle enemy health bar visibility
+    private void toggleEnemyHealthBar(boolean visible) {
+        enemyHealthBarVisible = visible;
+        enemyLabel.setVisible(visible);
+    }
+
+    // Initialize autosave
+    private void initializeAutosave() {
+        if (autosaveTimer != null) {
+            autosaveTimer.stop();
+        }
+
+        if (autosaveEnabled) {
+            autosaveTimer = new Timer(300000, e -> saveGame()); // Autosave every 5 minutes
+            autosaveTimer.start();
+            appendToLog("Autosave enabled.");
+        } else {
+            appendToLog("Autosave disabled.");
+        }
+    }
+    
     private void openSettings() {
         String previousDifficulty = currentDifficulty;
         int previousCombatSpeed = combatAnimationSpeed;
         Font previousFont = gameLog.getFont();
-        
+        boolean previousAutosaveEnabled = autosaveEnabled;
+        boolean previousEnemyHealthBarVisible = enemyHealthBarVisible;
+
         JDialog settingsDialog = new JDialog(this, "Settings", true);
-        // Fixed width to prevent text cutoff
-        settingsDialog.setSize(450, 550);
+        settingsDialog.setSize(450, 600);
         settingsDialog.setLocationRelativeTo(this);
 
-        // Main panel with GridBagLayout for precise control
         JPanel mainPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        // Game Info Panel - Now with fixed width labels
+        // Game Info Panel
         JPanel gameInfoPanel = new JPanel(new GridLayout(0, 1, 2, 2));
         gameInfoPanel.setBorder(BorderFactory.createTitledBorder("Game Information"));
-        
-        
-        // I do not know html... I never will... All I know is that this code works
-        
-        String gameInfoText = String.format(
-        		// DO NOT TOUCH
-        		// I REPEAT
-        		// DO NOT TOUCH
-        	    "<html><body style='width: %dpx'>" +
-        	    "Game Version: %s<br><br>" +
-        	    "Player Stats:<br>" +
-        	    "Name: %s<br>" +
-        	    "Level: %d<br>" +
-        	    "Total Coins: %d<br>" +
-        	    "Current HP: %d/%d<br>" +
-        	    "Developer: %s</body></html>",
-        	    350, // Fixed width for text wrapping
-        	    gameVersion,
-        	    playerName,
-        	    playerLevel,
-        	    playerCoins,
-        	    playerHealth,
-        	    playerMaxHealth,
-        	    developerName 
-        	);
 
-        
+        String gameInfoText = String.format(
+            "<html><body style='width: %dpx'>" +
+            "Game Version: %s<br><br>" +
+            "Player Stats:<br>" +
+            "Name: %s<br>" +
+            "Level: %d<br>" +
+            "Total Coins: %d<br>" +
+            "Current HP: %d/%d<br>" +
+            "Developer: %s</body></html>",
+            350,
+            gameVersion,
+            playerName,
+            playerLevel,
+            playerCoins,
+            playerHealth,
+            playerMaxHealth,
+            developerName
+        );
+
         JLabel gameInfo = new JLabel(gameInfoText);
         gameInfoPanel.add(gameInfo);
+
+      
+
+        // Autosave Panel
+        JPanel autosavePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        autosavePanel.setBorder(BorderFactory.createTitledBorder("Autosave"));
+        JCheckBox autosaveCheckbox = new JCheckBox("Enable Autosave", autosaveEnabled);
+        autosavePanel.add(autosaveCheckbox);
+
+        // Enemy Health Bar Panel
+        JPanel healthBarPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        healthBarPanel.setBorder(BorderFactory.createTitledBorder("Enemy Health Bar"));
+        JCheckBox healthBarCheckbox = new JCheckBox("Show Enemy Health Bar", enemyHealthBarVisible);
+        healthBarCheckbox.addActionListener(e -> toggleEnemyHealthBar(healthBarCheckbox.isSelected()));
+        healthBarPanel.add(healthBarCheckbox);
 
         // Display Settings
         JPanel displayPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         displayPanel.setBorder(BorderFactory.createTitledBorder("Display Settings"));
-        
         JLabel fontLabel = new JLabel("Game Log Font Size: ");
-        String[] fontSizes = {"12", "13", "14", "15", "16"};
+        String[] fontSizes = {"10", "11", "12", "13", "14", "15", "16", "17"};
         JComboBox<String> fontSizeCombo = new JComboBox<>(fontSizes);
         fontSizeCombo.setSelectedItem(String.valueOf(gameLog.getFont().getSize()));
-        
-        JCheckBox boldCheckbox = new JCheckBox("Bold Font");
-        boldCheckbox.setSelected(gameLog.getFont().isBold());
-        
+        JCheckBox boldCheckbox = new JCheckBox("Bold Font", gameLog.getFont().isBold());
         displayPanel.add(fontLabel);
         displayPanel.add(fontSizeCombo);
         displayPanel.add(boldCheckbox);
@@ -374,73 +452,66 @@ public class aasdasdasdasdasd extends JFrame {
         // Game Speed Settings
         JPanel speedPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         speedPanel.setBorder(BorderFactory.createTitledBorder("Game Speed Settings"));
-        
         JLabel speedLabel = new JLabel("Combat Animation Speed: ");
-        String[] speeds = {"Fast", "Normal", "Slow"};
+        String[] speeds = {"Fast", "Normal", "Slow", "Instant"};
         JComboBox<String> speedCombo = new JComboBox<>(speeds);
+        speedCombo.setSelectedItem("Normal");
         speedPanel.add(speedLabel);
         speedPanel.add(speedCombo);
 
-        // Difficulty Settings with better visibility
+        // Difficulty Settings
         JPanel difficultyPanel = new JPanel(new GridLayout(0, 1));
         difficultyPanel.setBorder(BorderFactory.createTitledBorder("Difficulty Settings"));
-        
         ButtonGroup difficultyGroup = new ButtonGroup();
         JRadioButton easyButton = new JRadioButton("Easy (More Health, Less Enemy Damage)");
-        JRadioButton normalButton = new JRadioButton("Normal");
+        JRadioButton normalButton = new JRadioButton("Normal", true);
         JRadioButton hardButton = new JRadioButton("Hard (Less Health, More Enemy Damage)");
-        
-        // Set initial selection
-        switch(currentDifficulty) {
-            case "easy": easyButton.setSelected(true); break;
-            case "normal": normalButton.setSelected(true); break;
-            case "hard": hardButton.setSelected(true); break;
-        }
-
         difficultyGroup.add(easyButton);
         difficultyGroup.add(normalButton);
         difficultyGroup.add(hardButton);
-
         difficultyPanel.add(easyButton);
         difficultyPanel.add(normalButton);
         difficultyPanel.add(hardButton);
 
-        // Add all panels to main panel with proper positioning
+        // Add panels to main panel
         gbc.gridy = 0;
         mainPanel.add(gameInfoPanel, gbc);
         
         gbc.gridy = 1;
-        mainPanel.add(displayPanel, gbc);
-        
+        mainPanel.add(autosavePanel, gbc);
         gbc.gridy = 2;
-        mainPanel.add(speedPanel, gbc);
-        
+        mainPanel.add(healthBarPanel, gbc);
         gbc.gridy = 3;
+        mainPanel.add(displayPanel, gbc);
+        gbc.gridy = 4;
+        mainPanel.add(speedPanel, gbc);
+        gbc.gridy = 5;
         mainPanel.add(difficultyPanel, gbc);
 
-        // Button panel
+        // Button Panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton saveButton = new JButton("Save Settings");
         JButton cancelButton = new JButton("Cancel");
 
         saveButton.addActionListener(e -> {
-            // Update settings
-            String speed = (String)speedCombo.getSelectedItem();
-            switch(speed) {
+            String speed = (String) speedCombo.getSelectedItem();
+            switch (speed) {
                 case "Fast": setCombatSpeed(250); break;
                 case "Normal": setCombatSpeed(500); break;
                 case "Slow": setCombatSpeed(750); break;
+                case "Instant": setCombatSpeed(0); break;
             }
-            	
-            
-            // cool syntax to have it not use {}'s 
+
             if (easyButton.isSelected()) setDifficulty("easy", false);
             else if (normalButton.isSelected()) setDifficulty("normal", false);
             else if (hardButton.isSelected()) setDifficulty("hard", false);
 
-            int size = Integer.parseInt((String)fontSizeCombo.getSelectedItem());
+            int size = Integer.parseInt((String) fontSizeCombo.getSelectedItem());
             int style = boldCheckbox.isSelected() ? Font.BOLD : Font.PLAIN;
             gameLog.setFont(new Font("Courier", style, size));
+
+            autosaveEnabled = autosaveCheckbox.isSelected();
+            enemyHealthBarVisible = healthBarCheckbox.isSelected();
 
             settingsDialog.dispose();
             appendToLog("Settings saved successfully!");
@@ -450,28 +521,19 @@ public class aasdasdasdasdasd extends JFrame {
             setDifficulty(previousDifficulty, true);
             setCombatSpeed(previousCombatSpeed);
             gameLog.setFont(previousFont);
+            autosaveEnabled = previousAutosaveEnabled;
+            enemyHealthBarVisible = previousEnemyHealthBarVisible;
             settingsDialog.dispose();
         });
 
         buttonPanel.add(saveButton);
         buttonPanel.add(cancelButton);
 
-        // Add panels to dialog with proper borders
         settingsDialog.add(mainPanel, BorderLayout.CENTER);
         settingsDialog.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Make sure timers resume properly
-        settingsDialog.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                exploreTimer.start();
-                walkTimer.start();
-            }
-        });
-
-        settingsDialog.setVisible(true); // treeka treekn terrrkey turkey
+        settingsDialog.setVisible(true);
     }
-    
 
     private void setDifficulty(String difficulty, boolean isRestoring) {
         if (difficulty.equals(currentDifficulty) && !isRestoring) return;
@@ -520,7 +582,7 @@ public class aasdasdasdasdasd extends JFrame {
     private Timer walkTimer; // walk timer so its cool and dynamic type beat 
     private String currentArea = "Green Meadows";
     private int areaProgress = 0;
-    private final int STEPS_TO_NEXT_AREA = 15; 
+    private final int STEPS_TO_NEXT_AREA = 10; 
     // V important variable... touch this only if u wanna make the game easier/harder
     
 
@@ -618,7 +680,7 @@ public class aasdasdasdasdasd extends JFrame {
         // Define enemy pools for each area
         String[] meadowEnemies = {"Slime", "Goblin", "Bandit", "Young Wolf", "Small Bear", "Rookie Wizard"};
         String[] caveEnemies = {"Cave Troll", "Dark Priest", "Skeletal Warrior", "Cave Spider", "Wizard"};
-        String[] castleEnemies = {"Royal Guard", "Dark Knight", "Court Wizard", "Elite Archer"};
+        String[] castleEnemies = {"Royal Guard", "Dark Knight", "Court Wizard", "Master Archer"};
         
         // Select enemy pool based on current area
         String[] currentEnemyPool;
@@ -649,7 +711,7 @@ public class aasdasdasdasdasd extends JFrame {
                 levelVariance = 3;
                 break;
             case "Zen's Castle":
-                minLevel = 10;
+                minLevel = 7;
                 levelVariance = 4;
                 break;
         }
@@ -665,36 +727,36 @@ public class aasdasdasdasdasd extends JFrame {
     }
 
     private void calculateBaseStats() {
-        // Base health and damage scaled by level
+        // Base enemy stats based on area and level
         switch(currentArea) {
             case "Green Meadows":
-                enemyHealth = 20 + (enemyLevel * 5);
+                enemyHealth = 30 + (enemyLevel * 5);
                 enemyMinDamage = 4 + (enemyLevel);
-                enemyMaxDamage = 6 + (enemyLevel);
-                minCoins = 5 + (enemyLevel);
-                maxCoins = 10 + (enemyLevel * 2);
-                minExp = 10 + (enemyLevel * 2);
-                maxExp = 15 + (enemyLevel * 2);
-                break;
-                
-            case "Gloomy Caves":
-                enemyHealth = 35 + (enemyLevel * 6);
-                enemyMinDamage = 7 + (enemyLevel);
-                enemyMaxDamage = 10 + (enemyLevel);
-                minCoins = 10 + (enemyLevel * 2);
-                maxCoins = 20 + (enemyLevel * 3);
+                enemyMaxDamage = 7 + (enemyLevel);
+                minCoins = 8 + (enemyLevel);
+                maxCoins = 14 + (enemyLevel * 2);
                 minExp = 20 + (enemyLevel * 3);
                 maxExp = 30 + (enemyLevel * 3);
                 break;
                 
-            case "Zen's Castle":
-                enemyHealth = 60 + (enemyLevel * 6);
-                enemyMinDamage = 9 + (enemyLevel);
-                enemyMaxDamage = 11 + (enemyLevel);
-                minCoins = 20 + (enemyLevel * 3);
-                maxCoins = 35 + (enemyLevel * 4);
+            case "Gloomy Caves":
+                enemyHealth = 45 + (enemyLevel * 6);
+                enemyMinDamage = 6 + (enemyLevel);
+                enemyMaxDamage = 10 + (enemyLevel);
+                minCoins = 15 + (enemyLevel * 2);
+                maxCoins = 25 + (enemyLevel * 3);
                 minExp = 35 + (enemyLevel * 4);
                 maxExp = 50 + (enemyLevel * 4);
+                break;
+                
+            case "Zen's Castle":
+                enemyHealth = 65 + (enemyLevel * 7);
+                enemyMinDamage = 9 + (enemyLevel);
+                enemyMaxDamage = 13 + (enemyLevel);
+                minCoins = 25 + (enemyLevel * 3);
+                maxCoins = 40 + (enemyLevel * 4);
+                minExp = 50 + (enemyLevel * 5);
+                maxExp = 70 + (enemyLevel * 5);
                 break;
         }
     }
@@ -736,7 +798,7 @@ public class aasdasdasdasdasd extends JFrame {
     }
 
     private void applyAreaModifiers() {
-        // Chance for elite enemies increases with area difficulty
+        // Chance for elite enemies increases with area difficulty\
         double eliteChance = 0;
         switch(currentArea) {
             case "Green Meadows":
@@ -748,7 +810,22 @@ public class aasdasdasdasdasd extends JFrame {
             case "Zen's Castle":
                 eliteChance = 0.05; // 5% chance
                 break;
+         
+         
         }
+        double shinyChance = 0;
+        switch(currentArea) {
+            case "Green Meadows":
+            	shinyChance = 0.01; // 1% chance
+                break;
+            case "Gloomy Caves":
+            	shinyChance = 0.01; // 1% chance
+                break;
+            case "Zen's Castle":
+            	shinyChance = 0.02; // 2% chance
+                break;
+        }
+        
         
         // Elite enemy generation
         if (random.nextDouble() < eliteChance) {
@@ -759,6 +836,14 @@ public class aasdasdasdasdasd extends JFrame {
             minCoins = (int)(minCoins * 2);
             maxCoins = (int)(maxCoins * 2);
             minExp = (int)(minExp * 1.5);
+            maxExp = (int)(maxExp * 1.5);
+        }
+        
+        if(random.nextDouble() < shinyChance) {
+        	enemyName = "✨ Shiny ✨ " + enemyName;
+        	minCoins = (int)(minCoins * 3.2);
+        	maxCoins = (int)(maxCoins * 2);
+        	minExp = (int)(minExp * 1.5);
             maxExp = (int)(maxExp * 1.5);
         }
     }
@@ -808,12 +893,6 @@ public class aasdasdasdasdasd extends JFrame {
         }
     }
 
-    
-    
-
-    
-    
-    
     private void handleAttack() {
         if (enemyHealth <= 0) return;
 
@@ -852,7 +931,7 @@ public class aasdasdasdasdasd extends JFrame {
 
         Timer enemyAttackTimer = new Timer(combatAnimationSpeed, e -> {
             int enemyDamage = random.nextInt(enemyMaxDamage - enemyMinDamage + 1) + enemyMinDamage;
-            enemyDamage -= armourAmount;
+            enemyDamage -= armourAmount * 2;
             playerHealth -= enemyDamage;
             updateHealthBar();
 
@@ -955,32 +1034,48 @@ public class aasdasdasdasdasd extends JFrame {
 
     private void handleRun() {
     	// Want to make this a 33/66 thing but I dont want it to suck so bad nobody uses
-   
-        appendToLog("You ran away safely!");
-        setCombatButtonsEnabled(false);
-        enemyLabel.setText("No enemy present");
-        inCombat = false;
-        shopButton.setEnabled(true); 
+    	// Made this a 33/66 thing, BUT, its in favor of the player 
+    	int randomRun = random.nextInt(3);
+    	randomRun++;
+    	if(randomRun > 1) {
+    		appendToLog("You ran away safely!");
+            setCombatButtonsEnabled(false);
+            enemyLabel.setText("No enemy present");
+            inCombat = false;
+            shopButton.setEnabled(true);             
+            // print statements to debug
+            System.out.println(randomRun);
+    	} else if(randomRun == 1){
+    		appendToLog("You attempted to run away but you tripped and fell!");
+    		System.out.println(randomRun);
+    		simulateEnemyAttack();
+    	}
+        
     }
 
     private void handleHeal() {
-    	
         if (healthPotionCount > 0) {
-        	if (playerHealth == playerMaxHealth) {
-        		appendToLog("You are at max health!");
-        	} else {
-        		playerHealth = Math.min(playerMaxHealth, playerHealth + 20);
+            if (playerHealth == playerMaxHealth) {
+                appendToLog("You are at max health!");
+            } else {
+                // New healing calculation: 20 + ((maxhealth / 10) * 1.5)
+                int baseHeal = 20;
+                int scalingHeal = (int)((playerMaxHealth / 10.0) * 1.5);
+                int healingAmount = baseHeal + scalingHeal;
+                
+                // Ensure we don't overheal
+                int actualHeal = Math.min(healingAmount, playerMaxHealth - playerHealth);
+                playerHealth += actualHeal;
                 healthPotionCount--;
                 updateHealthBar();
-                appendToLog("Used a health potion. Health restored to " + playerHealth);
+                appendToLog("Used a health potion. Health restored by " + actualHeal + " to " + playerHealth);
                 healButton.setText("Heal " + "(" + healthPotionCount + ")");
-                
-        	}
-            
+            }
         } else {
             appendToLog("No health potions available!");
         }
     }
+
 
     private void handlePlayerDeath() {
         isPlayerAlive = false;
@@ -1078,6 +1173,7 @@ public class aasdasdasdasdasd extends JFrame {
     }
 
     private void handleShopPurchase(int itemIndex) {
+    	updateShop();
         switch (itemIndex) {
             case 0: // Health Potion
                 healthPotionCount++;
@@ -1091,81 +1187,98 @@ public class aasdasdasdasdasd extends JFrame {
                 break;
                 
             case 2: // Max Health Up
-                playerMaxHealth += 5;
-                playerHealth += 10;
+                playerMaxHealth += SHOP_HEALTH_INCREASE;
+                playerHealth += SHOP_HEALTH_INCREASE;
                 if (playerHealth >= playerMaxHealth) { playerHealth = playerMaxHealth; }
                 updateHealthBar();
-                appendToLog("Increased your max health to " + playerMaxHealth + "!");
-                
+                appendToLog("Increased your max health by " + SHOP_HEALTH_INCREASE + " to " + playerMaxHealth + "!");
                 break;
                 
             case 3: // Experience Boost
-                // Add exp boost logic here
-            	playerExpBoost += 3;
+                playerExpBoost += 3;
                 appendToLog("Bought an experience boost! You now have " + playerExpBoost + "!");
-                
                 break;
                 
             case 4: // Armor Piece
-                // Add armor logic here
-                appendToLog("Bought an armor piece!");
+            	boolean weakArmour;
+                int armorBoost = shopPurchaseCounts[4] <= MAX_STRONG_SHIELD_PURCHASES ? 
+                                SHIELD_STRONG_BOOST : SHIELD_WEAK_BOOST;
+                // doing this so that i can update the display
+                if (armorBoost == 2) {
+                	weakArmour = false;
+                	
+                }else if (armorBoost == 1) {
+                	weakArmour = true;
+                }
+                armourAmount += armorBoost;
+                appendToLog("Bought an armor piece! +" + armorBoost + " armor (Total: " + armourAmount + ")");
                 break;
         }
     }
 
 
     private void triggerRandomEvent() {
-    	int randomEvent = random.nextInt(6) + 1;
-    	switch(randomEvent) {
-    		case 1:
-    			if (!ownedRelic) {
-    				appendToLog("You found an ancient artifact! Your sword damage increases.");
-    	            minSwordDamage += 2;
-    	            maxSwordDamage += 2;
-    	            ownedRelic = true;
-    	            updateStats();
-    			} else {
-    				triggerRandomEvent(); // redo it like a champ
-    			}
-    			break;
-    		case 2:
-    			int coinsFound = random.nextInt(20) + 12;
+        int randomEvent = random.nextInt(7) + 1; // Updated to include new event
+        switch(randomEvent) {
+            case 1:
+                if (!ownedRelic) {
+                    appendToLog("You found an ancient artifact! Your sword damage increases.");
+                    minSwordDamage += 2;
+                    maxSwordDamage += 2;
+                    ownedRelic = true;
+                    updateStats();
+                } else {
+                    triggerRandomEvent();
+                }
+                break;
+            case 2:
+                int coinsFound = random.nextInt(20) + 12;
                 playerCoins += coinsFound;
                 appendToLog("You found a treasure chest! Earned " + coinsFound + " coins.");
                 updateStats();
-    			break;
-    		case 3:
-    			appendToLog("Ouch! You have tripped and fell!");
-    			int randomDamage = random.nextInt(3);
-    			randomDamage++;
-    			playerHealth -= randomDamage;
-    			updateHealthBar();
-    			break;
-    		case 4:
-    			
-    			if(playerCoins >= 10) {
-    									updateAll();
-    										initBeggar();
-    											break;
-    												     }
-    			else {
-    					triggerRandomEvent();
-    										  }
-    			 // Cool syyntax.. makes me look like the boss.. cuz i am.. $WAG
-    			
-    			break;        
-    		case 5:
-    			// Gonna try to have a boss fight but idk how to fit it into the game, idk if i want it in events.
-    			// I dont like the bad odds on this but itll suck if its too common.
-    		    if (playerLevel >= 5 && random.nextInt(10) < 2) { // 20% chance for dragon if level >= 5
-    		        dragonBossfight();
-    		    } else {
-    		        appendToLog("You think you spotted a cave, but it was just a shadow...");
-    		    }
-    		    break;
-    	}
-    	
-        
+                break;
+            case 3:
+                appendToLog("Ouch! You have tripped and fell!");
+                int randomDamage = random.nextInt(3) + 1;
+                playerHealth -= randomDamage;
+                updateHealthBar();
+                break;
+            case 4:
+                if(playerCoins >= 10) {
+                    updateAll();
+                    initBeggar();
+                } else {
+                    triggerRandomEvent();
+                }
+                break;
+            case 5:
+                if (playerLevel >= 5 && random.nextInt(10) < 2) {
+                    dragonBossfight();
+                } else {
+                    appendToLog("You think you spotted a cave, but it was just a shadow...");
+                }
+                break;
+            case 6:
+                encounterCleric();
+                break;
+            default:
+                triggerRandomEvent(); // Reroll if we hit case 7
+                break;
+        }
+    }
+    private void encounterCleric() {
+        if (playerHealth < playerMaxHealth) {
+            int healAmount = (int)(playerMaxHealth * CLERIC_HEAL_PERCENT);
+            int oldHealth = playerHealth;
+            playerHealth = Math.min(playerMaxHealth, playerHealth + healAmount);
+            int actualHeal = playerHealth - oldHealth;
+            
+            appendToLog("✨ A wandering cleric offers to heal your wounds! ✨");
+            appendToLog("The cleric's magic restores " + actualHeal + " health!");
+            updateHealthBar();
+        } else {
+            appendToLog("A wandering cleric passes by, but you are already at full health.");
+        }
     }
     
     private void dragonBossfight() {
@@ -1173,14 +1286,30 @@ public class aasdasdasdasdasd extends JFrame {
         shopButton.setEnabled(false);
 
         enemyName = "🐉 Ancient Dragon 🐉";
-        int baseDragonHealth = 150;
-        int baseDragonMinDamage = 15;
-        int baseDragonMaxDamage = 25;
-        int dragonScaling = playerLevel * 10;
+        int baseDragonHealth = 200;
+        int baseDragonMinDamage = 30;
+        int baseDragonMaxDamage = 40;
+        int dragonScaling = playerLevel * 8;
 
+        // gonna make some cool dragon ascii art
+        // wow hes breathing fire
+        									//   🔥			
+//        									🔥]{}		
+//        /-----__^    +        ____     🔥 { /                                      
+//        |    ----^-\_      --/ * \-__ [}}  🔥\]                                       
+//  +     \_    _=_   (_    ./ ,/----'/   { 🔥                                     
+//          \__    \   (_./  /                                               
+//       +      \__  --        \___----^__                                       
+//      🔥       _/   _                  \_                                     
+//       |    _/  __/ )\"\ _____   -=-     \  +                                  
+//       |\__/   /    ^ ^       \____ \ _   )                                   
+//        \___--"          +         \_____))                                  
+//    +                +    
+        
+        // wow isnt this cool
         enemyHealth = baseDragonHealth + dragonScaling;
-        enemyMinDamage = baseDragonMinDamage + (playerLevel / 2);
-        enemyMaxDamage = baseDragonMaxDamage + (playerLevel / 2);
+        	enemyMinDamage = baseDragonMinDamage + (playerLevel / 2);
+        		enemyMaxDamage = baseDragonMaxDamage + (playerLevel / 2);
 
         minCoins = playerLevel * 20;
         maxCoins = minCoins + 50;
@@ -1233,8 +1362,10 @@ public class aasdasdasdasdasd extends JFrame {
         switch (randomBeggar) {
         case 1: 
         	appendToLog("The beggar is actually rich! He has blessed you!");
-        	int gainedAmount = playerCoins / 10; // Add a tenth of your coins
-        	gainedAmount += random.nextInt(10) + 1;
+        	int gainedAmount = playerCoins / 5; // Add a fifth of your coins
+        	gainedAmount += 24;
+        	// Beggar logic goes like this: (playerCoins / 10) + 24
+        	
         	appendToLog("You have gained " + gainedAmount + " Coins!");
         	playerCoins += gainedAmount;
         	updateAll();
@@ -1246,13 +1377,21 @@ public class aasdasdasdasdasd extends JFrame {
             	
             	playerCoins -= 4;
             	playerHealth -= punchAmount;
-            	appendToLog("You have lost " + "4" + " coins!");
+            	appendToLog("You have lost 4 coins!");
             	appendToLog("He Punched you for " + punchAmount + " Health!");
             	updateAll();
             	break;
-        	}else {
-        		beggarlogic(); // I like doing this. its p fun
-        	}	// so basically  it rerolls the logic if the 50/50 isnt met. P smart if you ask me... sounds like a 100 in this class ifykyk
+        	}else{
+        		appendToLog("The beggar is actually rich! He has blessed you!");
+            	gainedAmount = playerCoins / 5; // Add a fifth of your coins
+            	gainedAmount += 24;
+            	// Beggar logic goes like this: (playerCoins / 10) + 24
+            	
+            	appendToLog("You have gained " + gainedAmount + " Coins!");
+            	playerCoins += gainedAmount;
+            	updateAll();
+            	break;
+        		        	}	
         case 3:
         	appendToLog("\"Good things await in your path young one...\"");
         	appendToLog("The beggar humbly thanks you for your charitable donation");
@@ -1288,7 +1427,7 @@ public class aasdasdasdasdasd extends JFrame {
             save.store(out, "RPG Save Data");
             appendToLog("Game saved successfully!");
         } catch (IOException e) {
-            appendToLog("Error saving game: " + e.getMessage());
+            appendToLog("Error saving game: " + e.getMessage()); // hope this doesnt do this XD
         }
     }
     private void loadGame() {
@@ -1298,7 +1437,6 @@ public class aasdasdasdasdasd extends JFrame {
             save.load(in);
             
             // MY FINGER HURT
-     
             playerName = save.getProperty("playerName");
             playerLevel = Integer.parseInt(save.getProperty("playerLevel"));
             playerExperience = Integer.parseInt(save.getProperty("playerExperience"));
@@ -1317,7 +1455,7 @@ public class aasdasdasdasdasd extends JFrame {
             playerExpBoost = Integer.parseInt(save.getProperty("playerExpBoost"));
             setDifficulty(save.getProperty("difficulty"), true);
             
-         // MY FINGERS HURT OW!
+    
             updateAll();
             healButton.setText("Heal (" + healthPotionCount + ")");
             appendToLog("Game loaded successfully!");
@@ -1347,7 +1485,7 @@ public class aasdasdasdasdasd extends JFrame {
     	updateHealthBar();
     }
     private void updateStats() {
-    	statsLabel.setText("Name: " + playerName + " | Level: " + playerLevel + " | Coins: " + playerCoins + " | Min / Max Damage: " + minSwordDamage + " / " + maxSwordDamage + " | Exp boosts: " + playerExpBoost + " | Current area: " + currentArea);
+    	statsLabel.setText("Name: " + playerName + " | Level: " + playerLevel + " | Coins: " + playerCoins + " | Min / Max Damage: " + minSwordDamage + " / " + maxSwordDamage + " | Exp boosts: " + playerExpBoost + " | Armour: " + armourAmount + " | Current area: " + currentArea);
     }
 
     private void setCombatButtonsEnabled(boolean enabled) {
@@ -1359,6 +1497,7 @@ public class aasdasdasdasdasd extends JFrame {
         gameLog.append(message + "\n");
         gameLog.setCaretPosition(gameLog.getDocument().getLength());
     }
+    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             aasdasdasdasdasd game = new aasdasdasdasdasd();
